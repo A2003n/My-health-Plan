@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vegetarian Muscle Gain Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices: 
+        1. Macronutrient Breakdown (Dashboard): Report Info: Training/Rest Day Macros. Goal: Inform daily targets. Viz: Donut Chart (Chart.js). Interaction: Toggle for Training/Rest. Justification: Clear visual of macro proportions. Library: Chart.js.
+        2. Weekly Activity Overview (Dashboard): Report Info: 4 Training, 2 Active Recovery, 1 Rest Day. Goal: Show weekly activity structure. Viz: Bar Chart (Chart.js). Interaction: Static. Justification: Quick summary of weekly commitment. Library: Chart.js.
+        3. Meal & Workout Display: Report Info: Daily meal/exercise details. Goal: Provide actionable daily plans. Viz: Dynamically populated cards/lists (HTML/JS). Interaction: Day selection buttons. Justification: Easy access to daily specifics. Method: JS DOM manipulation.
+        CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { background-color: #15803d; color: white; } /* green-700 */
+        .tab-inactive { background-color: #dcfce7; color: #166534; } /* green-200, green-800 */
+        .chart-container { position: relative; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; max-height: 400px; } }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .day-button-active { background-color: #16a34a; color: white; } /* green-600 */
+        .day-button-inactive { background-color: #e5e7eb; color: #374151; } /* gray-200, gray-700 */
+        .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+    </style>
+</head>
+<body class="bg-beige-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-green-700">Vegetarian Muscle Gain Hub</h1>
+            <p class="text-lg text-gray-600 mt-2">Your 6-Month Plan to a Muscular & Wider Physique</p>
+        </header>
+
+        <nav class="flex justify-center mb-8 space-x-2 md:space-x-4">
+            <button data-tab="dashboard" class="tab-button tab-active px-4 py-2 rounded-lg font-semibold shadow-md">Dashboard</button>
+            <button data-tab="nutrition" class="tab-button tab-inactive px-4 py-2 rounded-lg font-semibold shadow-md">Nutrition</button>
+            <button data-tab="workout" class="tab-button tab-inactive px-4 py-2 rounded-lg font-semibold shadow-md">Workout</button>
+            <button data-tab="tips" class="tab-button tab-inactive px-4 py-2 rounded-lg font-semibold shadow-md">Progress & Tips</button>
+        </nav>
+
+        <main>
+            <section id="dashboard" class="content-section active p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-green-700 mb-4">Welcome to Your Dashboard!</h2>
+                <p class="mb-6 text-gray-700">This dashboard provides a quick overview of your muscle gain journey. Your primary goal is to gain approximately 4-5 kg of lean muscle over the next six months, transforming your physique from 165cm height and 60kg weight to around 64-65kg with a wider, more muscular build. Consistency with your vegetarian diet and workout plan is key to achieving this.</p>
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold text-green-700 mb-2">Today's Focus</h3>
+                        <p id="todaysFocus" class="text-gray-700">Loading...</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold text-green-700 mb-2">Quick Goals Reminder</h3>
+                        <ul class="list-disc list-inside text-gray-700">
+                            <li>Current: 165cm, 60kg</li>
+                            <li>Target: 64-65kg (Gain 4-5kg lean muscle)</li>
+                            <li>Timeline: 6 Months</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-700 mb-3 text-center">Daily Macronutrient Targets</h3>
+                        <div class="flex justify-center mb-2">
+                            <button id="macroTrainDayBtn" class="px-3 py-1 text-sm bg-green-600 text-white rounded-l-md">Training Day</button>
+                            <button id="macroRestDayBtn" class="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded-r-md">Rest Day</button>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="macroChart"></canvas>
+                        </div>
+                        <p id="macroCalorieInfo" class="text-center text-sm text-gray-600 mt-2"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-700 mb-3 text-center">Weekly Activity Overview</h3>
+                         <div class="chart-container">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="nutrition" class="content-section p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-green-700 mb-4">Nutrition Plan</h2>
+                <p class="mb-6 text-gray-700">This section outlines your weekly vegetarian meal plan, designed to fuel muscle growth and recovery. Remember to prioritize diverse protein sources, complex carbohydrates, and healthy fats. Adjust portion sizes based on your progress and hunger levels. Hydration is also crucial, so aim for 3-4 liters of water daily.</p>
+                
+                <div class="mb-4">
+                    <button class="collapsible-trigger w-full text-left px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-md hover:bg-green-200 transition">Key Nutritional Principles ▾</button>
+                    <div class="collapsible-content mt-2 p-3 bg-green-50 rounded-md">
+                        <ul class="list-disc list-inside space-y-1 text-sm text-gray-700">
+                            <li>Combine different plant-based proteins (legumes, grains, nuts, seeds, tofu, tempeh, seitan) with dairy and eggs.</li>
+                            <li>Maintain a calorie surplus: consume more calories than you burn.</li>
+                            <li>Focus on complex carbohydrates for sustained energy.</li>
+                            <li>Include healthy fats for hormone production and overall health.</li>
+                            <li>Aim for 4-6 meals/snacks throughout the day.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-2 mb-6" id="nutritionDaySelector">
+                </div>
+                <div id="nutritionPlanDisplay" class="space-y-4">
+                </div>
+            </section>
+
+            <section id="workout" class="content-section p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-green-700 mb-4">Workout Plan</h2>
+                <p class="mb-6 text-gray-700">This section details your 4-day upper/lower body split, focusing on compound movements for overall strength and exercises to enhance width. Progressive overload is vital: aim to gradually increase weights, reps, or sets. Always warm-up before and cool-down after workouts.</p>
+
+                <div class="mb-4">
+                    <button class="collapsible-trigger w-full text-left px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-md hover:bg-green-200 transition">Key Exercise Principles ▾</button>
+                    <div class="collapsible-content mt-2 p-3 bg-green-50 rounded-md">
+                        <ul class="list-disc list-inside space-y-1 text-sm text-gray-700">
+                            <li>Progressive Overload: Continuously challenge your muscles.</li>
+                            <li>Proper Form: Prioritize technique over heavy weight.</li>
+                            <li>Warm-up: 5-10 min light cardio & dynamic stretches.</li>
+                            <li>Cool-down: 5-10 min static stretches.</li>
+                            <li>Rest Between Sets: 60-90 seconds.</li>
+                            <li>Listen to Your Body: Rest when needed, don't push through pain.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-2 mb-6" id="workoutDaySelector">
+                </div>
+                <div id="workoutPlanDisplay" class="space-y-4">
+                </div>
+            </section>
+
+            <section id="tips" class="content-section p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-green-700 mb-4">Progress & Tips for Success</h2>
+                <p class="mb-6 text-gray-700">Achieving your muscle gain goals requires dedication beyond just diet and exercise. This section provides general tips for success and a space to conceptualize tracking your progress. Remember, consistency and patience are your greatest allies on this journey.</p>
+                
+                <div class="space-y-3">
+                    <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-green-700 mb-1">1. Consistency is Key</h3>
+                        <p class="text-sm text-gray-700">Adhere to your diet and exercise plan as consistently as possible. Small, consistent efforts yield significant results over time.</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-green-700 mb-1">2. Track Your Progress</h3>
+                        <p class="text-sm text-gray-700">Weigh yourself weekly, take body measurements monthly, log your workouts, and take progress photos every 4-6 weeks. This helps you stay motivated and make necessary adjustments.</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-green-700 mb-1">3. Prioritize Sleep</h3>
+                        <p class="text-sm text-gray-700">Aim for 7-9 hours of quality sleep per night. Muscle repair and growth primarily occur during sleep.</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-green-700 mb-1">4. Listen to Your Body</h3>
+                        <p class="text-sm text-gray-700">Don't push through sharp pain. Rest when you're overly fatigued. Some muscle soreness is normal, but know your limits.</p>
+                    </div>
+                     <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-green-700 mb-1">5. Adjust as Needed</h3>
+                        <p class="text-sm text-gray-700">If not gaining weight, slightly increase calories. If gaining too much fat, slightly reduce. If workouts plateau, change exercises or rep ranges.</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-green-700 mb-1">6. Be Patient</h3>
+                        <p class="text-sm text-gray-700">Building muscle takes time. Six months is a good period for noticeable changes, but true transformation is a continuous journey.</p>
+                    </div>
+                     <div class="bg-green-50 p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-green-700 mb-1">7. Consider Professional Guidance</h3>
+                        <p class="text-sm text-gray-700">A certified personal trainer can help with form, and a registered dietitian can offer personalized nutrition advice.</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 p-4 border border-green-200 rounded-lg">
+                    <h3 class="text-xl font-semibold text-green-700 mb-3">Conceptual Progress Tracker</h3>
+                    <p class="text-sm text-gray-600 mb-3">While this app doesn't save data, you can use this space to mentally note or manually track your progress. Consider fields like:</p>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div><label class="block font-medium">Date:</label><input type="text" class="w-full p-2 border rounded-md bg-gray-50" placeholder="e.g., Week 1"></div>
+                        <div><label class="block font-medium">Weight (kg):</label><input type="text" class="w-full p-2 border rounded-md bg-gray-50" placeholder="e.g., 60.5"></div>
+                        <div><label class="block font-medium">Chest (cm):</label><input type="text" class="w-full p-2 border rounded-md bg-gray-50" placeholder="e.g., 90"></div>
+                        <div><label class="block font-medium">Shoulders (cm):</label><input type="text" class="w-full p-2 border rounded-md bg-gray-50" placeholder="e.g., 110"></div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <footer class="text-center mt-12 py-4 border-t border-green-200">
+            <p class="text-sm text-gray-500">&copy; 2025 Vegetarian Muscle Gain Hub. Plan your growth!</p>
+        </footer>
+    </div>
+
+<script>
+const nutritionalData = {
+    macros: {
+        training: { kcal: 2700, protein: 120, fats: 85, carbs: 365 },
+        rest: { kcal: 2200, protein: 120, fats: 70, carbs: 275 }
+    },
+    mealPlan: {
+        Monday: {
+            type: "Training Day - Upper Body",
+            meals: [
+                { name: "Breakfast", items: "1 cup Oatmeal (cooked), 1 scoop vegetarian protein powder, 1/2 cup berries, 1 tbsp almond butter." },
+                { name: "Mid-Morning Snack", items: "1 Apple with 2 tbsp peanut butter." },
+                { name: "Lunch", items: "150g Paneer Curry with 1 cup Brown Rice, side mixed vegetable salad." },
+                { name: "Post-Workout", items: "Protein shake (1.5 scoops vegetarian protein) with 1 banana." },
+                { name: "Dinner", items: "150g Tofu Scramble with 1 large Sweet Potato, 1 cup Steamed Broccoli." },
+                { name: "Evening Snack", items: "1 cup Greek Yogurt with a few walnuts." }
+            ]
+        },
+        Tuesday: {
+            type: "Training Day - Lower Body & Core",
+            meals: [
+                { name: "Breakfast", items: "3 Scrambled Eggs with 2 slices whole-wheat toast, 1/2 avocado." },
+                { name: "Mid-Morning Snack", items: "Handful of almonds, 1 orange." },
+                { name: "Lunch", items: "1.5 cups Chickpea and Vegetable Stir-fry with 1 cup Quinoa." },
+                { name: "Post-Workout", items: "Protein shake (1.5 scoops vegetarian protein) with 1/2 cup oats." },
+                { name: "Dinner", items: "150g Lentil Dal with 1 cup Basmati Rice, 1 cup Spinach." },
+                { name: "Evening Snack", items: "Small bowl of cottage cheese." }
+            ]
+        },
+        Wednesday: {
+            type: "Rest/Active Recovery Day",
+            meals: [
+                { name: "Breakfast", items: "Protein Smoothie (1 scoop vegetarian protein, 1 cup spinach, 1/2 banana, 1 tbsp chia seeds, unsweetened almond milk)." },
+                { name: "Mid-Morning Snack", items: "1 Hard-boiled egg, 1 pear." },
+                { name: "Lunch", items: "Large Salad with 100g grilled Halloumi cheese, mixed greens, cherry tomatoes, cucumber, light vinaigrette." },
+                { name: "Dinner", items: "150g Vegetable and Bean Chili with a small serving of whole-wheat bread." },
+                { name: "Evening Snack", items: "Small handful of cashews." }
+            ]
+        },
+        Thursday: {
+            type: "Training Day - Upper Body Variation",
+            meals: [
+                { name: "Breakfast", items: "1 cup Cottage Cheese with 1/2 cup pineapple, 1 tbsp flax seeds." },
+                { name: "Mid-Morning Snack", items: "Vegetarian protein bar." },
+                { name: "Lunch", items: "150g Tempeh Stir-fry with 1 cup roasted potatoes, green beans." },
+                { name: "Post-Workout", items: "Protein shake (1.5 scoops vegetarian protein) with 2 rice cakes." },
+                { name: "Dinner", items: "150g Black Bean Burgers (patty only) with 1 cup Quinoa, asparagus." },
+                { name: "Evening Snack", items: "1 cup Greek Yogurt." }
+            ]
+        },
+        Friday: {
+            type: "Training Day - Lower Body & Core Variation",
+            meals: [
+                { name: "Breakfast", items: "1 cup Oatmeal (cooked), 1 scoop vegetarian protein powder, 1 tbsp chopped nuts, 1/2 cup berries." },
+                { name: "Mid-Morning Snack", items: "Rice cakes with 2 tbsp hummus." },
+                { name: "Lunch", items: "150g Kidney Bean and Corn Salad with brown rice, salsa, mixed veggies." },
+                { name: "Post-Workout", items: "Protein shake (1.5 scoops vegetarian protein) with 1 banana." },
+                { name: "Dinner", items: "150g Seitan Steaks with a large side salad, 1 cup roasted sweet potato fries." },
+                { name: "Evening Snack", items: "Small bowl of edamame." }
+            ]
+        },
+        Saturday: {
+            type: "Active Recovery/Light Cardio Day",
+            meals: [
+                { name: "Breakfast", items: "3 Egg White Omelet with mixed vegetables, 1 slice whole-wheat toast." },
+                { name: "Mid-Morning Snack", items: "Handful of walnuts, 1 apple." },
+                { name: "Lunch", items: "Leftover Lentil Dal or a large mixed bean salad." },
+                { name: "Dinner", items: "Homemade Vegetarian Pizza on whole-wheat base with paneer, mushrooms, bell peppers, olives." },
+                { name: "Evening Snack", items: "Small bowl of berries." }
+            ]
+        },
+        Sunday: {
+            type: "Rest Day",
+            meals: [
+                { name: "Breakfast", items: "Protein Pancakes (made with vegetarian protein powder, oats) with 1/4 cup berries." },
+                { name: "Mid-Morning Snack", items: "Greek yogurt." },
+                { name: "Lunch", items: "150g Roasted Tofu with 1 cup roasted mixed vegetables." },
+                { name: "Dinner", items: "150g Chana Masala (chickpea curry) with 1 cup Brown Rice." },
+                { name: "Evening Snack", items: "Small bowl of cottage cheese." }
+            ]
+        }
+    }
+};
+
+const workoutData = {
+    schedule: {
+        Monday: "Upper Body A",
+        Tuesday: "Lower Body & Core A",
+        Wednesday: "Rest or Active Recovery (30 min brisk walk, light stretching)",
+        Thursday: "Upper Body B",
+        Friday: "Lower Body & Core B",
+        Saturday: "Active Recovery or Light Cardio (30-45 min steady-state cardio)",
+        Sunday: "Rest"
+    },
+    details: {
+        "Upper Body A": [
+            { exercise: "Barbell Bench Press", sets: "3", reps: "8-12" },
+            { exercise: "Pull-ups (or Lat Pulldown)", sets: "3", reps: "8-12" },
+            { exercise: "Overhead Dumbbell Press", sets: "3", reps: "8-12" },
+            { exercise: "Dumbbell Rows", sets: "3", reps: "8-12 per arm" },
+            { exercise: "Dumbbell Lateral Raises", sets: "3", reps: "12-15" },
+            { exercise: "Bicep Curls", sets: "3", reps: "10-15" },
+            { exercise: "Tricep Pushdowns", sets: "3", reps: "10-15" }
+        ],
+        "Lower Body & Core A": [
+            { exercise: "Barbell Squats", sets: "3", reps: "8-12" },
+            { exercise: "Romanian Deadlifts", sets: "3", reps: "8-12" },
+            { exercise: "Leg Press", sets: "3", reps: "10-15" },
+            { exercise: "Leg Curls (Hamstring)", sets: "3", reps: "10-15" },
+            { exercise: "Leg Extensions (Quads)", sets: "3", reps: "10-15" },
+            { exercise: "Plank", sets: "3", reps: "hold 30-60s" },
+            { exercise: "Russian Twists", sets: "3", reps: "15-20 per side" }
+        ],
+        "Upper Body B": [
+            { exercise: "Incline Dumbbell Press", sets: "3", reps: "8-12" },
+            { exercise: "Seated Cable Rows", sets: "3", reps: "8-12" },
+            { exercise: "Barbell Overhead Press (Standing)", sets: "3", reps: "8-12" },
+            { exercise: "Face Pulls", sets: "3", reps: "12-15" },
+            { exercise: "Dumbbell Flyes (Flat or Incline)", sets: "3", reps: "10-15" },
+            { exercise: "Hammer Curls", sets: "3", reps: "10-15" },
+            { exercise: "Overhead Tricep Extension", sets: "3", reps: "10-15" }
+        ],
+        "Lower Body & Core B": [
+            { exercise: "Deadlifts (Conventional or Sumo)", sets: "3", reps: "5-8" },
+            { exercise: "Bulgarian Split Squats", sets: "3", reps: "8-12 per leg" },
+            { exercise: "Glute Bridges or Hip Thrusts", sets: "3", reps: "10-15" },
+            { exercise: "Calf Raises", sets: "3", reps: "15-20" },
+            { exercise: "Ab Rollouts (or Machine Crunches)", sets: "3", reps: "10-15" },
+            { exercise: "Leg Raises (Hanging or Lying)", sets: "3", reps: "10-15" }
+        ]
+    }
+};
+
+const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.tab-button');
+    const contentSections = document.querySelectorAll('.content-section');
+    const nutritionDaySelector = document.getElementById('nutritionDaySelector');
+    const nutritionPlanDisplay = document.getElementById('nutritionPlanDisplay');
+    const workoutDaySelector = document.getElementById('workoutDaySelector');
+    const workoutPlanDisplay = document.getElementById('workoutPlanDisplay');
+    const macroTrainDayBtn = document.getElementById('macroTrainDayBtn');
+    const macroRestDayBtn = document.getElementById('macroRestDayBtn');
+    const macroCalorieInfo = document.getElementById('macroCalorieInfo');
+    const todaysFocusEl = document.getElementById('todaysFocus');
+    
+    let macroChartInstance;
+    let activityChartInstance;
+
+    function updateTodaysFocus() {
+        const today = new Date().getDay();
+        const currentDayName = daysOfWeek[(today === 0 ? 6 : today - 1)];
+        const workoutType = workoutData.schedule[currentDayName] || "Rest Day";
+        const nutritionType = nutritionalData.mealPlan[currentDayName]?.type.includes("Training") ? "Training Day Nutrition" : "Rest Day Nutrition";
+        todaysFocusEl.textContent = `Today is ${currentDayName}. Focus on: ${workoutType}. Nutrition: ${nutritionType}.`;
+    }
+    
+    function createMacroChart(type = 'training') {
+        const ctx = document.getElementById('macroChart').getContext('2d');
+        const data = nutritionalData.macros[type];
+        macroCalorieInfo.textContent = `Total: Approx. ${data.kcal} kcal`;
+
+        if (macroChartInstance) {
+            macroChartInstance.destroy();
+        }
+        macroChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Protein (g)', 'Fats (g)', 'Carbs (g)'],
+                datasets: [{
+                    label: 'Macronutrients',
+                    data: [data.protein, data.fats, data.carbs],
+                    backgroundColor: ['#22c55e', '#f97316', '#3b82f6'], // green, orange, blue
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#4b5563'} }, // gray-600
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += context.parsed + 'g';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createActivityChart() {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        const activityCounts = { "Training": 0, "Active Recovery": 0, "Rest": 0 };
+        daysOfWeek.forEach(day => {
+            const activity = workoutData.schedule[day];
+            if (activity.includes("Upper Body") || activity.includes("Lower Body")) {
+                activityCounts["Training"]++;
+            } else if (activity.includes("Active Recovery")) {
+                activityCounts["Active Recovery"]++;
+            } else {
+                activityCounts["Rest"]++;
+            }
+        });
+
+        if (activityChartInstance) {
+            activityChartInstance.destroy();
+        }
+        activityChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Training Days', 'Active Recovery', 'Rest Days'],
+                datasets: [{
+                    label: 'Days per Week',
+                    data: [activityCounts["Training"], activityCounts["Active Recovery"], activityCounts["Rest"]],
+                    backgroundColor: ['#16a34a', '#fbbf24', '#6b7280'], // green-600, amber-400, gray-500
+                    borderColor: '#ffffff',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1, color: '#4b5563' }, grid: { color: '#e5e7eb'} }, // gray-200
+                    y: { ticks: { color: '#4b5563'} }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    macroTrainDayBtn.addEventListener('click', () => {
+        createMacroChart('training');
+        macroTrainDayBtn.classList.add('bg-green-600', 'text-white');
+        macroTrainDayBtn.classList.remove('bg-gray-300', 'text-gray-700');
+        macroRestDayBtn.classList.add('bg-gray-300', 'text-gray-700');
+        macroRestDayBtn.classList.remove('bg-green-600', 'text-white');
+    });
+
+    macroRestDayBtn.addEventListener('click', () => {
+        createMacroChart('rest');
+        macroRestDayBtn.classList.add('bg-green-600', 'text-white');
+        macroRestDayBtn.classList.remove('bg-gray-300', 'text-gray-700');
+        macroTrainDayBtn.classList.add('bg-gray-300', 'text-gray-700');
+        macroTrainDayBtn.classList.remove('bg-green-600', 'text-white');
+    });
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => {
+                t.classList.remove('tab-active');
+                t.classList.add('tab-inactive');
+            });
+            tab.classList.add('tab-active');
+            tab.classList.remove('tab-inactive');
+
+            contentSections.forEach(section => section.classList.remove('active'));
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    function displayNutritionPlan(day) {
+        const plan = nutritionalData.mealPlan[day];
+        nutritionPlanDisplay.innerHTML = '';
+        if (plan) {
+            const dayTypeEl = document.createElement('h3');
+            dayTypeEl.className = 'text-xl font-semibold text-green-600 mb-3';
+            dayTypeEl.textContent = `${day} (${plan.type})`;
+            nutritionPlanDisplay.appendChild(dayTypeEl);
+
+            plan.meals.forEach(meal => {
+                const mealCard = document.createElement('div');
+                mealCard.className = 'p-4 bg-green-50 rounded-lg shadow';
+                const mealName = document.createElement('h4');
+                mealName.className = 'font-semibold text-green-700 text-lg';
+                mealName.textContent = meal.name;
+                const mealItems = document.createElement('p');
+                mealItems.className = 'text-sm text-gray-700 mt-1';
+                mealItems.textContent = meal.items;
+                mealCard.appendChild(mealName);
+                mealCard.appendChild(mealItems);
+                nutritionPlanDisplay.appendChild(mealCard);
+            });
+        } else {
+            nutritionPlanDisplay.textContent = 'No plan available for this day.';
+        }
+    }
+    
+    function displayWorkoutPlan(day) {
+        const schedule = workoutData.schedule[day];
+        const details = workoutData.details[schedule];
+        workoutPlanDisplay.innerHTML = '';
+
+        const dayTypeEl = document.createElement('h3');
+        dayTypeEl.className = 'text-xl font-semibold text-green-600 mb-3';
+        dayTypeEl.textContent = `${day}: ${schedule}`;
+        workoutPlanDisplay.appendChild(dayTypeEl);
+
+        if (details) {
+            const exerciseList = document.createElement('ul');
+            exerciseList.className = 'space-y-3';
+            details.forEach(ex => {
+                const listItem = document.createElement('li');
+                listItem.className = 'p-3 bg-green-50 rounded-lg shadow';
+                const exName = document.createElement('span');
+                exName.className = 'font-semibold text-green-700';
+                exName.textContent = ex.exercise;
+                const exDetails = document.createElement('span');
+                exDetails.className = 'text-sm text-gray-600 ml-2';
+                exDetails.textContent = `(${ex.sets} sets of ${ex.reps} reps)`;
+                listItem.appendChild(exName);
+                listItem.appendChild(exDetails);
+                exerciseList.appendChild(listItem);
+            });
+            workoutPlanDisplay.appendChild(exerciseList);
+        } else if (!schedule.toLowerCase().includes("rest") && !schedule.toLowerCase().includes("active recovery")) {
+             workoutPlanDisplay.innerHTML += '<p class="text-gray-700">No specific exercises listed. Follow general guidelines for this type of workout.</p>';
+        }
+    }
+
+    daysOfWeek.forEach(day => {
+        const nutButton = document.createElement('button');
+        nutButton.textContent = day.substring(0,3);
+        nutButton.className = 'day-button-inactive px-3 py-1.5 rounded-md text-sm font-medium shadow';
+        nutButton.addEventListener('click', () => {
+            document.querySelectorAll('#nutritionDaySelector button').forEach(btn => btn.classList.replace('day-button-active', 'day-button-inactive'));
+            nutButton.classList.replace('day-button-inactive', 'day-button-active');
+            displayNutritionPlan(day);
+        });
+        nutritionDaySelector.appendChild(nutButton);
+
+        const workButton = document.createElement('button');
+        workButton.textContent = day.substring(0,3);
+        workButton.className = 'day-button-inactive px-3 py-1.5 rounded-md text-sm font-medium shadow';
+        workButton.addEventListener('click', () => {
+            document.querySelectorAll('#workoutDaySelector button').forEach(btn => btn.classList.replace('day-button-active', 'day-button-inactive'));
+            workButton.classList.replace('day-button-inactive', 'day-button-active');
+            displayWorkoutPlan(day);
+        });
+        workoutDaySelector.appendChild(workButton);
+    });
+    
+    document.querySelectorAll('.collapsible-trigger').forEach(trigger => {
+        trigger.addEventListener('click', () => {
+            const content = trigger.nextElementSibling;
+            trigger.classList.toggle('active');
+            if (content.style.maxHeight && content.style.maxHeight !== "0px") {
+                content.style.maxHeight = "0px";
+                trigger.textContent = trigger.textContent.replace('▾', '▸').replace('▴', '▸');
+
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                trigger.textContent = trigger.textContent.replace('▸', '▴').replace('▾', '▴');
+            }
+        });
+    });
+
+    updateTodaysFocus();
+    createMacroChart('training');
+    createActivityChart();
+    
+    // Fix: Ensure buttons are rendered before attempting to click the first one
+    const firstNutritionButton = nutritionDaySelector.querySelector('button');
+    if (firstNutritionButton) {
+        firstNutritionButton.click();
+    }
+    const firstWorkoutButton = workoutDaySelector.querySelector('button');
+    if (firstWorkoutButton) {
+        firstWorkoutButton.click();
+    }
+});
+</script>
+</body>
+</html>
